@@ -7,6 +7,7 @@ async fn greet(req: HttpRequest) -> impl Responder {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    //! HttpServer, handles all transport level concerns.
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(greet))
