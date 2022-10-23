@@ -9,12 +9,15 @@ use crate::routes::{health_check, subscribe};
 // It is no longer a binary entrypoint, therefore we can mark it as async
 // without having to use any proc-macro incantation.
 pub fn run(listener: TcpListener, connection: PgConnection) -> Result<Server, std::io::Error> {
-    //! HttpServer, handles all transport level concerns.
-    let server = HttpServer::new(|| {
+    // Wrap the connection in a smart pointer
+    let connection = web::Data::new(connection);
+
+    // HttpServer, handles all transport level concerns.
+    let server = HttpServer::new(move || {
         App::new()
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
-            .app_data(connection)
+            .app_data(connection.clone())
     })
     .listen(listener)?
     .run();
