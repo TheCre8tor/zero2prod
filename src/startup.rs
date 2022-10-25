@@ -1,9 +1,8 @@
-use std::net::TcpListener;
-
+use crate::routes::{health_check, subscribe};
+use actix_web::middleware::Logger;
 use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
-
-use crate::routes::{health_check, subscribe};
+use std::net::TcpListener;
 
 // We need to mark `run` as public.
 // It is no longer a binary entrypoint, therefore we can mark it as async
@@ -15,6 +14,8 @@ pub fn run(listener: TcpListener, db_pool: PgPool) -> Result<Server, std::io::Er
     // HttpServer, handles all transport level concerns.
     let server = HttpServer::new(move || {
         App::new()
+            // Middlewares are added using the `wrap` method on `App`
+            .wrap(Logger::default())
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
             .app_data(db_pool.clone())
