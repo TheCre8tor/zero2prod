@@ -47,19 +47,9 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
     .await;
 
     match query_result {
-        Ok(_) => {
-            tracing::info!(
-                "[request_id: {}] - New subscriber details have been saved",
-                request_id
-            );
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!(
-                "[request_id: {}] - Failed to execute query: {:?}",
-                request_id,
-                e
-            );
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(err) => {
+            tracing::error!("Failed to execute query: {:?}", err);
             HttpResponse::InternalServerError().finish()
         }
     }
