@@ -9,7 +9,8 @@ use zero2prod::telemetry::{get_subscriber, init_subscriber};
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Telemetry Setup & Initialization ->
-    let subscriber = get_subscriber("zero2prod".into(), "info".into());
+    //! init_subscriber should only be called once
+    let subscriber = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
     // Database configuration ->

@@ -56,6 +56,7 @@ DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME
 export DATABASE_URL
 >&2 echo DATABASE_URL
 
+# disable this two commands if you already have a docker image
 sqlx database create
 sqlx migrate run
 
