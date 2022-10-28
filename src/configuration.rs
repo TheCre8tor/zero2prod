@@ -67,8 +67,6 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
 
     let environment_filename = format!("{}.yaml", environment.as_str());
 
-    println!("Environment: {}", environment_filename);
-
     let settings = config::Config::builder()
         .add_source(config::File::from(
             configuration_directory.join("base.yaml"),
