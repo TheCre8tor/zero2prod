@@ -21,9 +21,8 @@ services:
       # Deploy a new version on every commit to `main`!
       # Continuous Deployment, here we come!
       deploy_on_push: true
-      # !!! Fill in with your details
-      # e.g. LukeMathWalker/zero-to-production
-      repo: thecre8tor/zero2prod
+      # Fill in with your details
+      repo: TheCre8tor/zero2prod
 
     # Active probe used by DigitalOcean's to ensure our application is healthy
     health_check:
