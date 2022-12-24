@@ -1,6 +1,5 @@
 //! main.rs
 
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 // use sqlx::PgPool;
 use std::net::TcpListener;
