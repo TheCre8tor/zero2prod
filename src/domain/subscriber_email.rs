@@ -30,13 +30,7 @@ mod tests {
     use fake::Fake;
 
     use super::SubscriberEmail;
-    use claim::{assert_err, assert_ok};
-
-    #[test]
-    fn valid_email_are_passed_successfully() {
-        let email = SafeEmail().fake();
-        assert_ok!(SubscriberEmail::parse(email));
-    }
+    use claim::assert_err;
 
     #[test]
     fn empty_string_is_rejected() {
@@ -54,5 +48,20 @@ mod tests {
     fn email_missing_subject_is_rejected() {
         let email = "@domain.com".to_string();
         assert_err!(SubscriberEmail::parse(email));
+    }
+
+    #[derive(Debug, Clone)]
+    struct ValidEmailFixture(pub String);
+
+    impl quickcheck::Arbitrary for ValidEmailFixture {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+            let email = SafeEmail().fake_with_rng(g);
+            Self(email)
+        }
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn valid_emails_are_parsed_successfully(valid_email: ValidEmailFixture) -> bool {
+        SubscriberEmail::parse(valid_email.0).is_ok()
     }
 }
