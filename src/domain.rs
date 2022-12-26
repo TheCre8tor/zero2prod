@@ -2,15 +2,17 @@
 
 use unicode_segmentation::UnicodeSegmentation;
 
+#[derive(Debug)]
 pub struct NewSubscriber {
     pub email: String,
     pub name: SubscriberName,
 }
 
+#[derive(Debug)]
 pub struct SubscriberName(String);
 
 impl SubscriberName {
-    pub fn parse(name: String) -> Self {
+    pub fn parse(name: String) -> Result<Self, String> {
         let is_empty_or_whitespace = name.trim().is_empty();
         let is_too_long = name.graphemes(true).count() > 256;
         let forbidden_characters: [char; 9] = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
@@ -23,7 +25,7 @@ impl SubscriberName {
             panic!("{} is not a valid subscriber name.", name)
         }
 
-        Self(name)
+        Ok(Self(name))
     }
 }
 
