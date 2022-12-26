@@ -181,8 +181,6 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
 
     let error = "name field is present but empty";
 
-    println!("Status: {}", response.status().as_u16());
-
     assert_eq!(
         400,
         response.status().as_u16(),

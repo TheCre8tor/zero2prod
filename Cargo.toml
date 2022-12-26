@@ -38,6 +38,12 @@ features = [
     "offline"
 ]
 
+[dev-dependencies]
+# We are not using fake >= 2.4 because it relies on rand 0.8
+# which has been recently released and it is not yet used by
+# quickcheck (solved in its upcoming 1.0 release!)
+fake = "2.5.0" 
+
 [lib]
 path = "src/lib.rs"
 name = "zero2prod"
