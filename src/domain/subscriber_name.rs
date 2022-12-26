@@ -9,7 +9,7 @@ impl SubscriberName {
     pub fn parse(name: String) -> Result<Self, String> {
         let is_empty_or_whitespace = name.trim().is_empty();
         let is_too_long = name.graphemes(true).count() > 256;
-        let forbidden_characters: [char; 9] = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
+        let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}', '@', '#'];
 
         let contains_forbidden_characters = name
             .chars()

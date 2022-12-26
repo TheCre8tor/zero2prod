@@ -11,6 +11,12 @@ pub struct FormData {
     pub name: String,
 }
 
+#[derive(serde::Serialize)]
+struct BadRequestError<'a> {
+    pub error: &'a str,
+    pub message: String,
+}
+
 /* [subscribe] orchestrates the work to be done by calling the
  * required routines and translates their outcome into the
  * proper response according to the rules and conventions of
@@ -32,7 +38,12 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
     // TryFrom<FormData> trait for NewSubscriber struct.
     let new_subscriber = match form.0.try_into() {
         Ok(subscriber) => subscriber,
-        Err(_) => return HttpResponse::BadRequest().finish(),
+        Err(err) => {
+            return HttpResponse::BadRequest().json(BadRequestError {
+                error: "120GT",
+                message: err,
+            })
+        }
     };
 
     match insert_subscriber(&pool, &new_subscriber).await {
