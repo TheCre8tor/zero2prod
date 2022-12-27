@@ -3,12 +3,13 @@ name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+name = "zero2prod"
 
 [dependencies]
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-reqwest = "0.11"
 serde = { version = "1", features = ["derive"]}
 config = "0.13"
 uuid = { version = "1", features = ["v4"] }
@@ -38,6 +39,12 @@ features = [
     "offline"
 ]
 
+[dependencies.reqwest]
+version = "0.11"
+default-features = false
+# We need the `json` feature flag to serialize/deserialize JSON payloads 
+features = ["json", "rustls-tls"]
+
 [dev-dependencies]
 # We are not using fake >= 2.4 because it relies on rand 0.8
 # which has been recently released and it is not yet used by
@@ -45,8 +52,4 @@ features = [
 fake = "~2.3.0"
 quickcheck = "0.9.2"
 quickcheck_macros = "0.9.1"
-rand = "0.8"
 
-[lib]
-path = "src/lib.rs"
-name = "zero2prod"
