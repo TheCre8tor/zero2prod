@@ -43,12 +43,8 @@ then
       -e POSTGRES_PASSWORD=${DB_PASSWORD} \
       -e POSTGRES_DB=${DB_NAME} \
       -p "${DB_PORT}":5432 \
-<<<<<<< HEAD
-      -d postgres \
-=======
       -d \
       --name "postgres_$(date '+%s')" \
->>>>>>> 49bf286641db90e9e877b363108540703bae3773
       postgres -N 1000
       # ^ Increased maximum number of connections for testing purposes
 
