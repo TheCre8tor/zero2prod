@@ -51,7 +51,11 @@ async fn spawn_app() -> TestApp {
         .sender()
         .expect("Invalid sender email address.");
 
-    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email);
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
 
     // Server connection setup ->
     let server = zero2prod::startup::run(listener, connection_pool.clone(), email_client);

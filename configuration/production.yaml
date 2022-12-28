@@ -7,3 +7,4 @@ database:
 email_client:
   base_url: "https://api.postmarkapp.com"
   sender_email: "alexander.nitiola@spaybusiness.com"
+  authorization_token: "my-secret-token"
