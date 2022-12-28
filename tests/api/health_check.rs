@@ -1,9 +1,9 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{spawn_app, VirtualDB};
 
 #[tokio::test]
 async fn health_check_works() {
     // Arrange ->
-    let app = spawn_app().await;
+    let app = spawn_app(VirtualDB::Disabled).await;
 
     // We need to bring in `reqwest`
     // to perform HTTP requests against our application.

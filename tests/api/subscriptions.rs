@@ -1,9 +1,9 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{spawn_app, VirtualDB};
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange ->
-    let app = spawn_app().await;
+    let app = spawn_app(VirtualDB::Enabled).await;
 
     // Act ->
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
@@ -17,6 +17,8 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .await
         .expect("Failed to fetch saved subscriptions");
 
+    dbg!(&saved);
+
     assert_eq!(saved.email, "ursula_le_guin@gmail.com");
     assert_eq!(saved.name, "le guin");
 }
@@ -24,7 +26,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange ->
-    let app = spawn_app().await;
+    let app = spawn_app(VirtualDB::Enabled).await;
 
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -49,7 +51,8 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
-    let app = spawn_app().await;
+    let app = spawn_app(VirtualDB::Enabled).await;
+
     let body = "name=&email=ursula_le_guin%40gmail.com";
 
     let response = app.post_subscriptions(body.into()).await;
