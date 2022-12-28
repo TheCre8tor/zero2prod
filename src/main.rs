@@ -1,7 +1,7 @@
 //! main.rs
 
 use zero2prod::configuration::get_configuration;
-use zero2prod::startup;
+use zero2prod::startup::{self, Application};
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
@@ -15,8 +15,8 @@ async fn main() -> std::io::Result<()> {
     let configuration = get_configuration().expect("Failed to read configuration");
 
     // Server Initialization ->
-    let server = startup::build(configuration).await?;
-    server.await?;
+    let application = Application::build(configuration).await?;
+    application.run_server().await?;
 
     Ok(())
 }

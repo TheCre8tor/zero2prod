@@ -1,4 +1,4 @@
-use crate::configuration::Settings;
+use crate::configuration::{DatabaseSettings, Settings};
 use crate::{
     email_client::EmailClient,
     routes::{health_check, subscribe},
@@ -12,7 +12,7 @@ use tracing_actix_web::TracingLogger;
 // We need to mark `run` as public.
 // It is no longer a binary entrypoint, therefore we can mark it as async
 // without having to use any proc-macro incantation.
-pub fn run(
+fn run(
     listener: TcpListener,
     db_pool: PgPool,
     email_client: EmailClient,
@@ -37,36 +37,57 @@ pub fn run(
     Ok(server)
 }
 
-pub async fn build(configuration: Settings) -> Result<Server, std::io::Error> {
-    // Database configuration ->
-    let connection_pool = PgPoolOptions::new()
+pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
+    PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy_with(configuration.database.db_with_name());
+        .connect_lazy_with(configuration.db_with_name())
+}
 
-    // Build a new email client
-    let sender_email = configuration
-        .email_client
-        .sender()
-        .expect("Invalid sender email address.");
+pub struct Application {
+    port: u16,
+    server: Server,
+}
 
-    let timeout = configuration.email_client.timeout();
+impl Application {
+    pub async fn build(configuration: Settings) -> Result<Application, std::io::Error> {
+        // Database configuration ->
+        let connection_pool = get_connection_pool(&configuration.database);
 
-    let email_client = EmailClient::new(
-        configuration.email_client.base_url,
-        sender_email,
-        configuration.email_client.authorization_token,
-        timeout,
-    );
+        // Build a new email client
+        let sender_email = configuration
+            .email_client
+            .sender()
+            .expect("Invalid sender email address.");
 
-    // Port & Address setup ->
-    let address = format!(
-        "{}:{}",
-        configuration.application.host, configuration.application.port
-    );
+        let timeout = configuration.email_client.timeout();
 
-    let listener = TcpListener::bind(address)?;
+        let email_client = EmailClient::new(
+            configuration.email_client.base_url,
+            sender_email,
+            configuration.email_client.authorization_token,
+            timeout,
+        );
 
-    // Bubble up the io::Error if we failed to bind the address
-    // Otherwise call .await on our Server
-    run(listener, connection_pool, email_client)
+        // Port & Address setup ->
+        let address = format!(
+            "{}:{}",
+            configuration.application.host, configuration.application.port
+        );
+
+        let listener = TcpListener::bind(address)?;
+        let port = listener.local_addr().unwrap().port();
+        let server = run(listener, connection_pool, email_client)?;
+
+        Ok(Self { port, server })
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
+    }
+
+    // A more expressive name that makes it clear that
+    // this function only returns when the application is stopped.
+    pub async fn run_server(self) -> Result<(), std::io::Error> {
+        self.server.await
+    }
 }
