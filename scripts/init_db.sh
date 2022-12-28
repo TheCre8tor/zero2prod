@@ -36,6 +36,7 @@ then
     echo >&2 "    docker kill ${RUNNING_POSTGRES_CONTAINER}"
     exit 1
   fi
+
   # Launch postgres using Docker
   docker run \
       -e POSTGRES_USER=${DB_USER} \
@@ -46,6 +47,11 @@ then
       --name "postgres_$(date '+%s')" \
       postgres -N 1000
       # ^ Increased maximum number of connections for testing purposes
+
+      # --name "postgres_$(date '+%s')" \ - I left this out for now ->
+
+      # NOTE: remove the --name "postgres_$(date '+%s')" \
+      # when database locally.
 fi
 
 # Keep pinging Postgres until it's ready to accept commands
