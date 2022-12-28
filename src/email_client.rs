@@ -3,13 +3,13 @@ use reqwest::Client;
 use secrecy::{ExposeSecret, Secret};
 
 #[derive(serde::Serialize)]
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 struct SendEmailRequest {
-    From: String,
-    To: String,
-    Subject: String,
-    HtmlBody: String,
-    TextBody: String,
+    from: String,
+    to: String,
+    subject: String,
+    html_body: String,
+    text_body: String,
 }
 
 #[derive(Clone)]
@@ -47,11 +47,11 @@ impl EmailClient {
         let url = format!("{}/email", self.base_url);
 
         let request_body = SendEmailRequest {
-            From: self.sender.as_ref().to_owned(),
-            To: recipient.as_ref().to_owned(),
-            Subject: subject.to_owned(),
-            HtmlBody: html_content.to_owned(),
-            TextBody: text_content.to_owned(),
+            from: self.sender.as_ref().to_owned(),
+            to: recipient.as_ref().to_owned(),
+            subject: subject.to_owned(),
+            html_body: html_content.to_owned(),
+            text_body: text_content.to_owned(),
         };
 
         self.http_client
@@ -104,7 +104,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn send_email_sends_the_expected_request() {
+    async fn send_emails_fires_a_request_to_base_url() {
         // Arrange ->
         let mock_server = MockServer::start().await;
         let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
