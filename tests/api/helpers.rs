@@ -19,11 +19,6 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     }
 });
 
-pub enum VirtualDB {
-    Enabled,
-    Disabled,
-}
-
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
@@ -42,7 +37,7 @@ impl TestApp {
     }
 }
 
-pub async fn spawn_app(enable_db: VirtualDB) -> TestApp {
+pub async fn spawn_app() -> TestApp {
     // The first time `initialize` is invoked the code in `TRACING` is executed.
     // All other invocations will instead skip execution.
     //! init_subscriber should only be called once
@@ -66,12 +61,7 @@ pub async fn spawn_app(enable_db: VirtualDB) -> TestApp {
     };
 
     // Create and migrate the database
-    match enable_db {
-        VirtualDB::Enabled => {
-            configure_database(&configuration.database).await;
-        }
-        VirtualDB::Disabled => {}
-    }
+    configure_database(&configuration.database).await;
 
     // Launch the application as a background task
     let application = Application::build(configuration.clone())

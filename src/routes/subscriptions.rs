@@ -64,6 +64,10 @@ pub async fn subscribe(
     HttpResponse::Ok().finish()
 }
 
+#[tracing::instrument(
+    name = "Send a confirmation email to a new subscriber",
+    skip(email_client, new_subscriber)
+)]
 pub async fn send_confirmation_email(
     email_client: &EmailClient,
     new_subscriber: NewSubscriber,

@@ -3,12 +3,12 @@ use wiremock::{
     Mock, ResponseTemplate,
 };
 
-use crate::helpers::{spawn_app, VirtualDB};
+use crate::helpers::spawn_app;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
@@ -27,7 +27,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_persists_the_new_subscriber() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
@@ -53,7 +53,7 @@ async fn subscribe_persists_the_new_subscriber() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
 
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -78,7 +78,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
 
     let body = "name=&email=ursula_le_guin%40gmail.com";
 
@@ -97,7 +97,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
 #[tokio::test]
 async fn subscribe_sends_a_confirmation_email_for_valid_data() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
@@ -117,7 +117,7 @@ async fn subscribe_sends_a_confirmation_email_for_valid_data() {
 #[tokio::test]
 async fn subscribe_sends_a_confirmation_email_with_a_link() {
     // Arrange
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
