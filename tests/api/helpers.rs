@@ -56,7 +56,7 @@ pub async fn spawn_app(enable_db: VirtualDB) -> TestApp {
     let configuration = {
         let mut configs = get_configuration().expect("Failed to read configuration.");
         // Use a different database for each test case
-        configs.database.database_name = Uuid::new_v4().to_string();
+        configs.database.database_name = format!("TEST-{}", Uuid::new_v4());
         // Use the mock server as email API
         configs.email_client.base_url = email_server.uri();
         // Use a random OS port
