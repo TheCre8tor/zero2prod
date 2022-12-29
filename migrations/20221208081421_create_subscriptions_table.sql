@@ -1,8 +1,5 @@
 -- Add migration script here
-ALTER TABLE
-    subscriptions
-ADD
-    COLUMN status TEXT NULL;
+CREATE TABLE subscriptions(
     id uuid NOT NULL,
     PRIMARY KEY (id),
     email TEXT NOT NULL UNIQUE,
