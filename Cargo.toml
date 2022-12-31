@@ -30,6 +30,7 @@ claim = "0.5"
 validator = "0.16.0"
 # We need the `std_rng` to get access to the PRNG we want
 rand = { version = "0.8", features=["std_rng"] }
+thiserror = "1"
 
 [dependencies.sqlx]
 version = "0.6"
