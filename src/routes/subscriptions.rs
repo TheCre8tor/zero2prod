@@ -194,7 +194,6 @@ pub async fn store_token(
 }
 
 // A new error type, wrapping a sqlx::Error
-#[derive(Debug)]
 pub struct StoreTokenError(sqlx::Error);
 
 impl ResponseError for StoreTokenError {}
@@ -209,4 +208,33 @@ impl std::fmt::Display for StoreTokenError {
             trying to store a suscription token."
         )
     }
+}
+
+impl std::fmt::Debug for StoreTokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}
+
+impl std::error::Error for StoreTokenError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        // The compiler transparently casts `&sqlx::Error` into a `&dyn Error`
+        Some(&self.0)
+    }
+}
+
+fn error_chain_fmt(
+    error: &impl std::error::Error,
+    formatter: &mut std::fmt::Formatter<'_>,
+) -> std::fmt::Result {
+    writeln!(formatter, "{}", error)?;
+
+    let mut current = error.source();
+
+    while let Some(cause) = current {
+        writeln!(formatter, "Caused by:\n\t{}", cause)?;
+        current = cause.source();
+    }
+
+    Ok(())
 }
