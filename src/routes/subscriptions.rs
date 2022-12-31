@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse, ResponseError};
 use chrono::Utc;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
+use reqwest::StatusCode;
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
@@ -43,25 +44,16 @@ pub async fn subscribe(
     // -->
     // We automatically get try_into for free by implementing
     // TryFrom<FormData> trait for NewSubscriber struct.
-    let new_subscriber = match form.0.try_into() {
-        Ok(subscriber) => subscriber,
-        Err(_) => return Ok(HttpResponse::BadRequest().finish()),
-    };
+    let new_subscriber = form.0.try_into()?;
 
     // Transactions are a way to group together related
     // operations in a single unit of work.
     // The database guarantees that all operations within
     // a transaction will succeed or fail together
-    let mut transaction = match pool.begin().await {
-        Ok(transaction) => transaction,
-        Err(_) => return Ok(HttpResponse::InternalServerError().finish()),
-    };
+    let mut transaction = pool.begin().await?;
 
     // Insert subscriber into the DB and return subscriber ID ->
-    let subscriber_id = match insert_subscriber(&mut transaction, &new_subscriber).await {
-        Ok(subscriber_id) => subscriber_id,
-        Err(_) => return Ok(HttpResponse::InternalServerError().finish()),
-    };
+    let subscriber_id = insert_subscriber(&mut transaction, &new_subscriber).await?;
 
     let subscription_token = generate_subscription_token();
 
@@ -71,22 +63,16 @@ pub async fn subscribe(
     store_token(&mut transaction, subscriber_id, &subscription_token).await?;
 
     // Commit the transaction to database ->
-    if transaction.commit().await.is_err() {
-        return Ok(HttpResponse::InternalServerError().finish());
-    };
+    transaction.commit().await?;
 
     // Send confirmation email along with the subscription link
-    if send_confirmation_email(
+    send_confirmation_email(
         &email_client,
         new_subscriber,
         &base_url.0,
         &subscription_token,
     )
-    .await
-    .is_err()
-    {
-        return Ok(HttpResponse::InternalServerError().finish());
-    }
+    .await?;
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -196,8 +182,6 @@ pub async fn store_token(
 // A new error type, wrapping a sqlx::Error
 pub struct StoreTokenError(sqlx::Error);
 
-impl ResponseError for StoreTokenError {}
-
 // Implement Display Trait for StoreTokenError
 impl std::fmt::Display for StoreTokenError {
     // Implement display ->
@@ -227,7 +211,7 @@ fn error_chain_fmt(
     error: &impl std::error::Error,
     formatter: &mut std::fmt::Formatter<'_>,
 ) -> std::fmt::Result {
-    writeln!(formatter, "{}", error)?;
+    writeln!(formatter, "{}\n", error)?;
 
     let mut current = error.source();
 
@@ -240,7 +224,12 @@ fn error_chain_fmt(
 }
 
 #[derive(Debug)]
-struct SubscriberError {}
+pub enum SubscriberError {
+    ValidationError(String),
+    DatabaseError(sqlx::Error),
+    StoreTokenError(StoreTokenError),
+    SendEmailError(reqwest::Error),
+}
 
 impl std::fmt::Display for SubscriberError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -250,4 +239,40 @@ impl std::fmt::Display for SubscriberError {
 
 impl std::error::Error for SubscriberError {}
 
-impl ResponseError for SubscriberError {}
+impl ResponseError for SubscriberError {
+    fn status_code(&self) -> reqwest::StatusCode {
+        match self {
+            SubscriberError::ValidationError(_) => StatusCode::BAD_REQUEST,
+            SubscriberError::DatabaseError(_)
+            | SubscriberError::StoreTokenError(_)
+            | SubscriberError::SendEmailError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+// We can then leverage the ? operator in our handler by
+// providing a From implementation for each of wrapped error
+// types:
+impl From<reqwest::Error> for SubscriberError {
+    fn from(error: reqwest::Error) -> Self {
+        Self::SendEmailError(error)
+    }
+}
+
+impl From<sqlx::Error> for SubscriberError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::DatabaseError(error)
+    }
+}
+
+impl From<StoreTokenError> for SubscriberError {
+    fn from(error: StoreTokenError) -> Self {
+        Self::StoreTokenError(error)
+    }
+}
+
+impl From<String> for SubscriberError {
+    fn from(error: String) -> Self {
+        Self::ValidationError(error)
+    }
+}
