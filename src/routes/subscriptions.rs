@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{web, HttpResponse, ResponseError};
 use chrono::Utc;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -37,7 +37,7 @@ pub async fn subscribe(
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
     base_url: web::Data<ApplicationBaseUrl>,
-) -> HttpResponse {
+) -> Result<HttpResponse, actix_web::Error> {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
     // -->
@@ -45,12 +45,7 @@ pub async fn subscribe(
     // TryFrom<FormData> trait for NewSubscriber struct.
     let new_subscriber = match form.0.try_into() {
         Ok(subscriber) => subscriber,
-        Err(err) => {
-            return HttpResponse::BadRequest().json(BadRequestError {
-                error: "120GT",
-                message: err,
-            })
-        }
+        Err(_) => return Ok(HttpResponse::BadRequest().finish()),
     };
 
     // Transactions are a way to group together related
@@ -59,28 +54,25 @@ pub async fn subscribe(
     // a transaction will succeed or fail together
     let mut transaction = match pool.begin().await {
         Ok(transaction) => transaction,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => return Ok(HttpResponse::InternalServerError().finish()),
     };
 
     // Insert subscriber into the DB and return subscriber ID ->
     let subscriber_id = match insert_subscriber(&mut transaction, &new_subscriber).await {
         Ok(subscriber_id) => subscriber_id,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => return Ok(HttpResponse::InternalServerError().finish()),
     };
 
     let subscription_token = generate_subscription_token();
 
     // Insert subscriber_id and subscription_token into the DB ->
-    if store_token(&mut transaction, subscriber_id, &subscription_token)
-        .await
-        .is_err()
-    {
-        return HttpResponse::InternalServerError().finish();
-    }
+    // The `?` operator transparently invokes the `Into` trait
+    // on our behalf - we don't need an explicit `map_err` anymore.
+    store_token(&mut transaction, subscriber_id, &subscription_token).await?;
 
     // Commit the transaction to database ->
     if transaction.commit().await.is_err() {
-        return HttpResponse::InternalServerError().finish();
+        return Ok(HttpResponse::InternalServerError().finish());
     };
 
     // Send confirmation email along with the subscription link
@@ -93,10 +85,10 @@ pub async fn subscribe(
     .await
     .is_err()
     {
-        return HttpResponse::InternalServerError().finish();
+        return Ok(HttpResponse::InternalServerError().finish());
     }
 
-    HttpResponse::Ok().finish()
+    Ok(HttpResponse::Ok().finish())
 }
 
 /// Generate a random 25-characters-long case-sensitive subscription token.
@@ -184,7 +176,7 @@ pub async fn store_token(
     transaction: &mut Transaction<'_, Postgres>,
     subscriber_id: Uuid,
     subscription_token: &str,
-) -> Result<(), sqlx::Error> {
+) -> Result<(), StoreTokenError> {
     sqlx::query!(
         r#"INSERT INTO subscription_tokens (subscription_token, subscriber_id)
         VALUES ($1, $2)"#,
@@ -195,8 +187,26 @@ pub async fn store_token(
     .await
     .map_err(|error| {
         tracing::error!("Failed to execute query: {:?}", error);
-        error
+        StoreTokenError(error)
     })?;
 
     Ok(())
+}
+
+// A new error type, wrapping a sqlx::Error
+#[derive(Debug)]
+pub struct StoreTokenError(sqlx::Error);
+
+impl ResponseError for StoreTokenError {}
+
+// Implement Display Trait for StoreTokenError
+impl std::fmt::Display for StoreTokenError {
+    // Implement display ->
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "A database error was encountered while \
+            trying to store a suscription token."
+        )
+    }
 }
