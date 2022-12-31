@@ -1,6 +1,4 @@
--- migrations/{timestamp}_create_subscriptions_table.sql
--- Create Subscriptions Table
-
+-- Add migration script here
 CREATE TABLE subscriptions(
     id uuid NOT NULL,
     PRIMARY KEY (id),

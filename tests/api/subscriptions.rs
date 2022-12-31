@@ -1,32 +1,59 @@
-use crate::helpers::{spawn_app, VirtualDB};
+use wiremock::{
+    matchers::{method, path},
+    Mock, ResponseTemplate,
+};
+
+use crate::helpers::spawn_app;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&app.email_server)
+        .await;
 
     // Act ->
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
     let response = app.post_subscriptions(body.into()).await;
 
     // Assert ->
     assert_eq!(200, response.status().as_u16());
+}
 
-    let saved = sqlx::query!("SELECT email, name FROM subscriptions")
+#[tokio::test]
+async fn subscribe_persists_the_new_subscriber() {
+    // Arrange ->
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&app.email_server)
+        .await;
+
+    // Act ->
+    app.post_subscriptions(body.into()).await;
+
+    // Assert ->
+    let saved = sqlx::query!("SELECT email, name, status FROM subscriptions")
         .fetch_one(&app.db_pool)
         .await
         .expect("Failed to fetch saved subscriptions");
 
-    dbg!(&saved);
-
     assert_eq!(saved.email, "ursula_le_guin@gmail.com");
     assert_eq!(saved.name, "le guin");
+    assert_eq!(saved.status, "pending_confirmation");
 }
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_data_is_missing() {
     // Arrange ->
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
 
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -51,7 +78,7 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
-    let app = spawn_app(VirtualDB::Enabled).await;
+    let app = spawn_app().await;
 
     let body = "name=&email=ursula_le_guin%40gmail.com";
 
@@ -65,4 +92,71 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
         "The API did not return a 400 Bad Request when the payload was {}.",
         error
     );
+}
+
+#[tokio::test]
+async fn subscribe_sends_a_confirmation_email_for_valid_data() {
+    // Arrange ->
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
+
+    // Act
+    app.post_subscriptions(body.into()).await;
+
+    // Assert
+    // Mock asserts on drop
+}
+
+#[tokio::test]
+async fn subscribe_sends_a_confirmation_email_with_a_link() {
+    // Arrange
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/email"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        // We are not setting an expectation here anymore
+        // The test is focused on another aspect of the app
+        // behaviour.
+        .mount(&app.email_server)
+        .await;
+
+    // Act
+    app.post_subscriptions(body.into()).await;
+
+    // Assert
+    // Get the first intercepted request
+    let email_request = &app.email_server.received_requests().await.unwrap()[0];
+
+    // Parse the body as JSON, starting from raw bytes
+    let confirmation_link = app.get_confirmation_links(email_request);
+
+    assert_eq!(confirmation_link.html, confirmation_link.plain_text);
+}
+
+#[tokio::test]
+async fn subscribe_fails_if_there_is_a_fatal_database_error() {
+    // Arrange
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    // Sabotage the database
+    sqlx::query!("ALTER TABLE subscription_tokens DROP COLUMN subscription_token;",)
+        .execute(&app.db_pool)
+        .await
+        .unwrap();
+
+    // Act ->
+    let response = app.post_subscriptions(body.into()).await;
+
+    // Assert
+    assert_eq!(response.status().as_u16(), 500);
 }

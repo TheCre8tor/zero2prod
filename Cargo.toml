@@ -28,6 +28,9 @@ serde-aux = "4"
 unicode-segmentation = "1"
 claim = "0.5"
 validator = "0.16.0"
+# We need the `std_rng` to get access to the PRNG we want
+rand = { version = "0.8", features=["std_rng"] }
+thiserror = "1"
 
 [dependencies.sqlx]
 version = "0.6"
@@ -58,3 +61,4 @@ quickcheck_macros = "0.9.1"
 tokio = { version = "1", features = ["rt", "macros"] }
 wiremock = "0.5.15"
 serde_json = "1"
+linkify = "0.9.0"
