@@ -6,5 +6,5 @@ database:
   require_ssl: true
 email_client:
   base_url: "https://api.postmarkapp.com"
-  sender_email: "alexander.nitiola@spaybusiness.com"
-  authorization_token: "45a9388c-8e2d-4b4a-9bba-9ee0f1f3b005"
+  sender_email: "alexander@borkeet.com"
+  authorization_token: "my-api-token"
