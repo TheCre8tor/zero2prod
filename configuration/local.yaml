@@ -4,3 +4,7 @@ application:
   host: 127.0.0.1
 database:
   require_ssl: false
+email_client:
+  base_url: "https://api.postmarkapp.com"
+  sender_email: "alexander@borkeet.com"
+  authorization_token: "my-api-token"
