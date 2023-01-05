@@ -26,7 +26,6 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 
 ENV SQLX_OFFLINE true
-ENV AUTHORIZATION_TOKEN 45a9388c-8e2d-4b4a-9bba-9ee0f1f3b005
 
 # Build our project
 RUN cargo build --release --bin zero2prod
