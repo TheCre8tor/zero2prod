@@ -1,8 +1,9 @@
 use actix_web::{post, web, HttpResponse, ResponseError};
 use reqwest::StatusCode;
 use sqlx::PgPool;
+use tracing::Subscriber;
 
-use crate::{email_client::EmailClient, routes::error_chain_fmt};
+use crate::{domain::SubscriberEmail, email_client::EmailClient, routes::error_chain_fmt};
 use anyhow::Context;
 
 #[derive(serde::Deserialize)]
@@ -18,7 +19,7 @@ pub struct Content {
 }
 
 struct ConfirmedSubscriber {
-    email: String,
+    email: SubscriberEmail,
 }
 
 #[post("/newsletters")]
@@ -32,13 +33,18 @@ pub async fn publish_newsletter(
     for subscriber in subscribers {
         email_client
             .send_email(
-                subscriber.email,
+                subscriber.email.clone(),
                 &body.title,
                 &body.content.html,
                 &body.content.text,
             )
             .await
-            .with_context(|| format!("Failed to send newsletter issue to {}", subscriber.email))?;
+            .with_context(|| {
+                format!(
+                    "Failed to send newsletter issue to {}",
+                    subscriber.email.as_ref()
+                )
+            })?;
     }
 
     Ok(HttpResponse::Ok().finish())
@@ -47,8 +53,12 @@ pub async fn publish_newsletter(
 async fn get_confirmed_subscribers(
     pool: &PgPool,
 ) -> Result<Vec<ConfirmedSubscriber>, anyhow::Error> {
+    struct Row {
+        email: String,
+    }
+
     let rows = sqlx::query_as!(
-        ConfirmedSubscriber,
+        Row,
         r#"
         SELECT email
         FROM subscriptions
@@ -58,7 +68,21 @@ async fn get_confirmed_subscribers(
     .fetch_all(pool)
     .await?;
 
-    Ok(rows)
+    let confirmed_subscribers = rows
+        .into_iter()
+        .filter_map(|row| match SubscriberEmail::parse(row.email) {
+            Ok(email) => Some(ConfirmedSubscriber { email }),
+            Err(error) => {
+                tracing::warn!(
+                    "A confirmed subscriber is using an invalid email address. \n{}",
+                    error
+                );
+                None
+            }
+        })
+        .collect();
+
+    Ok(confirmed_subscribers)
 }
 
 #[derive(thiserror::Error)]
