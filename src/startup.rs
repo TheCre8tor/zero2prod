@@ -4,6 +4,7 @@ use crate::routes::{
     confirm, health_check, home, login, login_form, publish_newsletter, subscribe,
 };
 use actix_web::{dev::Server, web, App, HttpServer};
+use secrecy::Secret;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
@@ -19,11 +20,13 @@ fn run(
     db_pool: PgPool,
     email_client: EmailClient,
     base_url: String,
+    hmac_secret: Secret<String>,
 ) -> Result<Server, std::io::Error> {
     // Wrap the pool using web::Data, which boils down to an Arc smart pointer
     let db_pool = web::Data::new(db_pool);
     let email_client = web::Data::new(email_client);
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
+    let hmac_secret = web::Data::new(hmac_secret);
 
     // HttpServer, handles all transport level concerns.
     let server = HttpServer::new(move || {
@@ -40,6 +43,7 @@ fn run(
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
+            .app_data(hmac_secret.clone())
     })
     .listen(listener)?
     .run();
@@ -91,6 +95,7 @@ impl Application {
             connection_pool,
             email_client,
             configuration.application.base_url,
+            configuration.application.hmac_secret,
         )?;
 
         Ok(Self { port, server })

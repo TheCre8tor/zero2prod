@@ -1,8 +1,11 @@
 //! src/routes/login/login_api.rs
 
-use actix_web::http::{header::LOCATION, StatusCode};
-use actix_web::{post, web, HttpResponse, ResponseError};
-use secrecy::Secret;
+use actix_web::error::InternalError;
+use actix_web::http::header::LOCATION;
+use actix_web::{post, web, HttpResponse};
+use hmac::{Hmac, Mac};
+
+use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
@@ -15,31 +18,55 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool),
+    skip(form, pool, secret),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 #[post("/login")]
 pub async fn login(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
-) -> Result<HttpResponse, LoginError> {
+    secret: web::Data<Secret<String>>,
+) -> Result<HttpResponse, InternalError<LoginError>> {
     let credentials = Credentials {
         username: form.0.username,
         password: form.0.password,
     };
 
     tracing::Span::current().record("username", &tracing::field::display(&credentials.username));
-    let user_id = validate_credentials(credentials, &pool)
-        .await
-        .map_err(|error| match error {
-            AuthError::InvalidCredentials(_) => LoginError::AuthError(error.into()),
-            AuthError::UnexpectedError(_) => LoginError::UnexpectedError(error.into()),
-        })?;
+    match validate_credentials(credentials, &pool).await {
+        Ok(user_id) => {
+            tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
 
-    tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
-    Ok(HttpResponse::SeeOther()
-        .insert_header((LOCATION, "/"))
-        .finish())
+            Ok(HttpResponse::SeeOther()
+                .insert_header((LOCATION, "/"))
+                .finish())
+        }
+        Err(error) => {
+            let error = match error {
+                AuthError::InvalidCredentials(_) => LoginError::AuthError(error.into()),
+                AuthError::UnexpectedError(_) => LoginError::UnexpectedError(error.into()),
+            };
+
+            let query_string = format!("error={}", urlencoding::Encoded::new(error.to_string()));
+
+            let secret = secret.expose_secret().as_bytes();
+
+            let hmac_tag = {
+                let mut mac = Hmac::<sha2::Sha256>::new_from_slice(secret).unwrap();
+                mac.update(query_string.as_bytes());
+                mac.finalize().into_bytes()
+            };
+
+            let response = HttpResponse::SeeOther()
+                .insert_header((
+                    LOCATION,
+                    format!("/login?{}&tag={:x}", query_string, hmac_tag),
+                ))
+                .finish();
+
+            Err(InternalError::from_response(error, response))
+        }
+    }
 }
 
 #[derive(thiserror::Error)]
@@ -53,21 +80,5 @@ pub enum LoginError {
 impl std::fmt::Debug for LoginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         error_chain_fmt(self, f)
-    }
-}
-
-impl ResponseError for LoginError {
-    fn status_code(&self) -> StatusCode {
-        // StatusCode::SEE_OTHER -> will redirect user to the
-        // specified location at the error_response method.
-        StatusCode::SEE_OTHER
-    }
-
-    fn error_response(&self) -> HttpResponse {
-        let encoded_error = urlencoding::Encoded::new(self.to_string());
-
-        HttpResponse::build(self.status_code())
-            .insert_header((LOCATION, format!("/login?error={}", encoded_error)))
-            .finish()
     }
 }
