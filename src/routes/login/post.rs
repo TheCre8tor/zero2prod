@@ -58,9 +58,16 @@ impl std::fmt::Debug for LoginError {
 
 impl ResponseError for LoginError {
     fn status_code(&self) -> StatusCode {
-        match self {
-            LoginError::AuthError(_) => StatusCode::UNAUTHORIZED,
-            LoginError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
+        // StatusCode::SEE_OTHER -> will redirect user to the
+        // specified location at the error_response method.
+        StatusCode::SEE_OTHER
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        let encoded_error = urlencoding::Encoded::new(self.to_string());
+
+        HttpResponse::build(self.status_code())
+            .insert_header((LOCATION, format!("/login?error={}", encoded_error)))
+            .finish()
     }
 }
