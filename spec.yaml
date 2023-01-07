@@ -56,7 +56,10 @@ services:
         value: ${APP_URL}
       - key: APP_EMAIL_CLIENT__AUTHORIZATION_TOKEN
         scope: RUN_TIME
-        value: ${AUTHORIZATION_TOKEN}
+        value: ${newsletter.AUTHORIZATION_TOKEN}
+      - key: APP_APPLICATION__HMAC_SECRET
+        scope: RUN_TIME
+        value: ${newsletter.HMAC_SECRET}
 databases:
   # PG = Postgres
   - engine: PG
