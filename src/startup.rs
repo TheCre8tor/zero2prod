@@ -12,6 +12,8 @@ use tracing_actix_web::TracingLogger;
 
 pub struct ApplicationBaseUrl(pub String);
 
+pub struct HmacSecret(pub Secret<String>);
+
 // We need to mark `run` as public.
 // It is no longer a binary entrypoint, therefore we can mark it as async
 // without having to use any proc-macro incantation.
@@ -26,7 +28,7 @@ fn run(
     let db_pool = web::Data::new(db_pool);
     let email_client = web::Data::new(email_client);
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
-    let hmac_secret = web::Data::new(hmac_secret);
+    let hmac_secret = web::Data::new(HmacSecret(hmac_secret));
 
     // HttpServer, handles all transport level concerns.
     let server = HttpServer::new(move || {
