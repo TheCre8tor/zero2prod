@@ -3,14 +3,12 @@
 use actix_web::error::InternalError;
 use actix_web::http::header::LOCATION;
 use actix_web::{post, web, HttpResponse};
-use hmac::{Hmac, Mac};
 
-use secrecy::{ExposeSecret, Secret};
+use secrecy::Secret;
 use sqlx::PgPool;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 use crate::routes::error_chain_fmt;
-use crate::startup::HmacSecret;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct FormData {
@@ -19,14 +17,13 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool, secret),
+    skip(form, pool),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 #[post("/login")]
 pub async fn login(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
-    secret: web::Data<HmacSecret>,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     let credentials = Credentials {
         username: form.0.username,
@@ -37,7 +34,6 @@ pub async fn login(
     match validate_credentials(credentials, &pool).await {
         Ok(user_id) => {
             tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
-
             Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
                 .finish())
@@ -48,21 +44,8 @@ pub async fn login(
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(error.into()),
             };
 
-            let query_string = format!("error={}", urlencoding::Encoded::new(error.to_string()));
-
-            let secret = secret.0.expose_secret().as_bytes();
-
-            let hmac_tag = {
-                let mut mac = Hmac::<sha2::Sha256>::new_from_slice(secret).unwrap();
-                mac.update(query_string.as_bytes());
-                mac.finalize().into_bytes()
-            };
-
             let response = HttpResponse::SeeOther()
-                .insert_header((
-                    LOCATION,
-                    format!("/login?{}&tag={:x}", query_string, hmac_tag),
-                ))
+                .insert_header((LOCATION, "/login"))
                 .finish();
 
             Err(InternalError::from_response(error, response))

@@ -58,7 +58,7 @@ features = [
 version = "0.11"
 default-features = false
 # We need the `json` feature flag to serialize/deserialize JSON payloads 
-features = ["json", "rustls-tls"]
+features = ["json", "rustls-tls", "cookies"]
 
 [dev-dependencies]
 # We are not using fake >= 2.4 because it relies on rand 0.8
