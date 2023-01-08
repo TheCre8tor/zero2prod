@@ -4,15 +4,12 @@ use crate::routes::{
     confirm, health_check, home, login, login_form, publish_newsletter, subscribe,
 };
 use actix_web::{dev::Server, web, App, HttpServer};
-use secrecy::Secret;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 pub struct ApplicationBaseUrl(pub String);
-
-pub struct HmacSecret(pub Secret<String>);
 
 // We need to mark `run` as public.
 // It is no longer a binary entrypoint, therefore we can mark it as async
