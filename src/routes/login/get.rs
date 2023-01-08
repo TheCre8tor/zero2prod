@@ -1,5 +1,6 @@
 //!  src/routes/login/mod.rs
 
+use actix_web::cookie::Cookie;
 use actix_web::http::header::ContentType;
 use actix_web::{get, HttpRequest, HttpResponse};
 use tera::Tera;
@@ -25,7 +26,13 @@ pub async fn login_form(request: HttpRequest) -> HttpResponse {
         Err(_) => "".into(),
     };
 
-    HttpResponse::Ok()
+    let mut response = HttpResponse::Ok()
         .content_type(ContentType::html())
-        .body(tera)
+        .body(tera);
+
+    response
+        .add_removal_cookie(&Cookie::new("_flash", ""))
+        .unwrap();
+
+    response
 }
