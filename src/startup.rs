@@ -30,10 +30,13 @@ fn run(
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
     let hmac_secret = web::Data::new(HmacSecret(hmac_secret));
 
+    // let message_framework = FlashMessagesFramework::builder(todo!()).build();
+
     // HttpServer, handles all transport level concerns.
     let server = HttpServer::new(move || {
         App::new()
             // Middlewares are added using the `wrap` method on `App`
+            // .wrap(message_framework.clone())
             .wrap(TracingLogger::default())
             .service(home)
             .service(login_form)
