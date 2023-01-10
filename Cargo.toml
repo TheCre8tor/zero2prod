@@ -37,6 +37,7 @@ base64 = "0.20.0"
 argon2 = { version = "0.4", features = ["std"] }
 urlencoding = "2" 
 tera = "1"
+actix-web-flash-messages = { version = "0.4", features = ["cookies"] } 
 
 [dependencies.sqlx]
 version = "0.6"
