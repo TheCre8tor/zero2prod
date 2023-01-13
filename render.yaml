@@ -7,7 +7,7 @@ services:
     region: frankfurt # optional (defaults to oregon)
     plan: free # optional (defaults to starter)
     branch: main # optional (defaults to master)
-    rootDir: zero2prod
+    rootDir: .
     dockerCommand: ./zero2prod # optional (defaults to Dockerfile command)
     numInstances: 1 # optional (defaults to 1)
     healthCheckPath: /health_check
