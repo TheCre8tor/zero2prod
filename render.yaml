@@ -44,5 +44,6 @@ services:
 
 databases:
   - name: newsletter
+    databaseName: newsletter
     region: frankfurt
     plan: free
