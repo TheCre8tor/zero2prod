@@ -1,10 +1,10 @@
 //! src/routes/login/login_api.rs
 
-use actix_web::cookie::Cookie;
 use actix_web::error::InternalError;
 use actix_web::http::header::LOCATION;
 use actix_web::{post, web, HttpResponse};
 
+use actix_web_flash_messages::FlashMessage;
 use secrecy::Secret;
 use sqlx::PgPool;
 
@@ -45,9 +45,15 @@ pub async fn login(
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(error.into()),
             };
 
+            FlashMessage::error(error.to_string()).send();
             let response = HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/login"))
-                .cookie(Cookie::new("_flash", error.to_string()))
+                // We no longer send cookie directly anylonger
+                // we send cookie through FlashMessage ->
+                // The FlashMessagesFramework middleware takes care of all
+                // the heavy-lifting behind the scenes - creating the cookie,
+                // signing it, setting the right properties, etc.
+                // .cookie(Cookie::new("_flash", error.to_string()))
                 .finish();
 
             Err(InternalError::from_response(error, response))

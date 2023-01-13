@@ -1,0 +1,52 @@
+services:
+  # A Docker web service
+  - type: web
+    name: zero2prod
+    env: docker
+    repo: https://github.com/TheCre8tor/zero2prod.git # optional
+    region: frankfurt # optional (defaults to oregon)
+    plan: starter # optional (defaults to starter)
+    branch: main # optional (defaults to master)
+    rootDir: zero2prod
+    dockerCommand: ./zero2prod # optional (defaults to Dockerfile command)
+    numInstances: 1 # optional (defaults to 1)
+    healthCheckPath: /health_check
+    envVars:
+      - key: APP_DATABASE__USERNAME
+        fromDatabase:
+          type: newsletter
+          property: user
+      - key: APP_DATABASE__PASSWORD
+        fromDatabase:
+          type: newsletter
+          property: password
+      - key: APP_DATABASE__HOST
+        fromDatabase:
+          type: newsletter
+          property: host
+      - key: APP_DATABASE__PORT
+        fromDatabase:
+          type: newsletter
+          property: port
+      - key: APP_DATABASE__DATABASE_NAME
+        fromDatabase:
+          type: newsletter
+          property: database
+      - key: APP_DATABASE__DATABASE_NAME
+        fromDatabase:
+          type: newsletter
+          property: database
+      - key: APP_APPLICATION__BASE_URL
+        fromService:
+          type: web
+          name: zero2prod
+          property: host
+      - key: APP_EMAIL_CLIENT__AUTHORIZATION_TOKEN
+        sync: false
+      - key: APP_APPLICATION__HMAC_SECRET
+        sync: false
+
+databases:
+  - name: newsletter
+    region: frankfurt
+    plan: free
