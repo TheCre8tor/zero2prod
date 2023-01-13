@@ -15,7 +15,6 @@ async fn an_error_flash_message_is_set_on_failure() {
 
     // Act - Part 2 - Follow the redirect
     let html_page = app.get_login_html().await;
-    dbg!(&html_page);
     assert!(html_page.contains("<p><i>Authentication failed</i></p>"));
     assert_is_redirected_to(&response, "/login");
 
