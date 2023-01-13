@@ -14,27 +14,27 @@ services:
     envVars:
       - key: APP_DATABASE__USERNAME
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: user
       - key: APP_DATABASE__PASSWORD
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: password
       - key: APP_DATABASE__HOST
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: host
       - key: APP_DATABASE__PORT
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: port
       - key: APP_DATABASE__DATABASE_NAME
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: database
       - key: APP_DATABASE__DATABASE_NAME
         fromDatabase:
-          type: newsletter
+          name: newsletter
           property: database
       - key: APP_APPLICATION__BASE_URL
         fromService:
