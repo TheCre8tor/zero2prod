@@ -32,10 +32,6 @@ services:
         fromDatabase:
           name: newsletter
           property: database
-      - key: APP_DATABASE__DATABASE_NAME
-        fromDatabase:
-          name: newsletter
-          property: database
       - key: APP_APPLICATION__BASE_URL
         fromService:
           type: web
