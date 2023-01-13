@@ -5,7 +5,7 @@ services:
     env: docker
     repo: https://github.com/TheCre8tor/zero2prod.git # optional
     region: frankfurt # optional (defaults to oregon)
-    plan: starter # optional (defaults to starter)
+    plan: free # optional (defaults to starter)
     branch: main # optional (defaults to master)
     rootDir: zero2prod
     dockerCommand: ./zero2prod # optional (defaults to Dockerfile command)
