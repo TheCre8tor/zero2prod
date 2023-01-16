@@ -1,6 +1,5 @@
 //! src/routes/admin/dashboard.rs
 
-use actix_session::Session;
 use actix_web::{get, http::header::ContentType, web, HttpResponse};
 use anyhow::Context;
 use sqlx::PgPool;

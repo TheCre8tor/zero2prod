@@ -1,6 +1,5 @@
 //! src/routes/login/login_api.rs
 
-use actix_session::Session;
 use actix_web::error::InternalError;
 use actix_web::http::header::LOCATION;
 use actix_web::{post, web, HttpResponse};
