@@ -224,6 +224,7 @@ pub async fn spawn_app() -> TestApp {
         api_client: client,
     };
 
+    // Create a dummy user account ->
     test_app.test_user.store(&test_app.db_pool).await;
 
     test_app
