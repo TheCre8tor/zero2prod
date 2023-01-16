@@ -15,4 +15,5 @@ email_client:
   sender_email: test@email.com
   authorization_token: "my-secret-token"
   timeout_milliseconds: 3000
-redis_uri: "redis://127.0.0.1:6379"
+redis:
+  uri: "redis://127.0.0.1:6379"
