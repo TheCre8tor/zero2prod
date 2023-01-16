@@ -2,6 +2,7 @@
 
 use actix_web::{get, http::header::ContentType, web, HttpResponse};
 use anyhow::Context;
+use reqwest::header::LOCATION;
 use sqlx::PgPool;
 use tera::Tera;
 use uuid::Uuid;
@@ -23,7 +24,9 @@ pub async fn admin_dashboard(
     let username = if let Some(user_id) = session.get_user_id().map_err(error500)? {
         get_username(user_id, &pool).await.map_err(error500)?
     } else {
-        todo!()
+        return Ok(HttpResponse::SeeOther()
+            .insert_header((LOCATION, "/login"))
+            .finish());
     };
 
     let read_file = include_str!("dashboard.html");
