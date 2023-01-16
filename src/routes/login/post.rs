@@ -11,6 +11,7 @@ use sqlx::PgPool;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 use crate::routes::error_chain_fmt;
+use crate::session_state::TypedSession;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct FormData {
@@ -26,7 +27,7 @@ pub struct FormData {
 pub async fn login(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
-    session: Session,
+    session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     let credentials = Credentials {
         username: form.0.username,
@@ -40,7 +41,7 @@ pub async fn login(
             session.renew();
             // if error occurs while storing the session, redirect to login page
             session
-                .insert("user_id", user_id)
+                .insert_user_id(user_id)
                 .map_err(|error| login_redirect(LoginError::UnexpectedError(error.into())))?;
             // if successful, redirect to the admin dashboard page
             Ok(HttpResponse::SeeOther()

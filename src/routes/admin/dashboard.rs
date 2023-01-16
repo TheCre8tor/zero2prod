@@ -7,6 +7,8 @@ use sqlx::PgPool;
 use tera::Tera;
 use uuid::Uuid;
 
+use crate::session_state::TypedSession;
+
 fn error500<T>(error: T) -> actix_web::Error
 where
     T: std::fmt::Debug + std::fmt::Display + 'static,
@@ -16,12 +18,10 @@ where
 
 #[get("/admin/dashboard")]
 pub async fn admin_dashboard(
-    session: Session,
     pool: web::Data<PgPool>,
+    session: TypedSession,
 ) -> Result<HttpResponse, actix_web::Error> {
-    // When using Session::get we must specify what type we want to
-    // deserialize the session state entry into - a Uuid in our case.
-    let username = if let Some(user_id) = session.get::<Uuid>("user_id").map_err(error500)? {
+    let username = if let Some(user_id) = session.get_user_id().map_err(error500)? {
         get_username(user_id, &pool).await.map_err(error500)?
     } else {
         todo!()
