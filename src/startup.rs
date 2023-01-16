@@ -116,7 +116,7 @@ impl Application {
             email_client,
             configuration.application.base_url,
             configuration.application.hmac_secret,
-            configuration.redis_url,
+            configuration.redis_uri,
         )
         .await?;
 
