@@ -10,9 +10,9 @@ database:
   username: "postgres"
   password: "password"
   database_name: "newsletter"
-# redis_uri: "redis://127.0.0.1:6379"
 email_client:
   base_url: localhost
   sender_email: test@email.com
   authorization_token: "my-secret-token"
   timeout_milliseconds: 3000
+redis_uri: "redis://127.0.0.1:6379"

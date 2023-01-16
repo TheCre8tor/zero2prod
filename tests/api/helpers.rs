@@ -119,6 +119,18 @@ impl TestApp {
             .await
             .unwrap()
     }
+
+    pub async fn get_admin_dashboard(&self) -> reqwest::Response {
+        self.api_client
+            .get(&format!("{}/admin/dashboard", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn get_admin_dashboard_html(&self) -> String {
+        self.get_admin_dashboard().await.text().await.unwrap()
+    }
 }
 
 impl TestUser {
@@ -213,6 +225,7 @@ pub async fn spawn_app() -> TestApp {
         api_client: client,
     };
 
+    // Create a dummy user account ->
     test_app.test_user.store(&test_app.db_pool).await;
 
     test_app

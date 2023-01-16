@@ -10,6 +10,7 @@ use sqlx::PgPool;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 use crate::routes::error_chain_fmt;
+use crate::session_state::TypedSession;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct FormData {
@@ -18,13 +19,14 @@ pub struct FormData {
 }
 
 #[tracing::instrument(
-    skip(form, pool),
+    skip(form, pool, session),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 #[post("/login")]
 pub async fn login(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
+    session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     let credentials = Credentials {
         username: form.0.username,
@@ -35,8 +37,14 @@ pub async fn login(
     match validate_credentials(credentials, &pool).await {
         Ok(user_id) => {
             tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
+            session.renew();
+            // if error occurs while storing the session, redirect to login page
+            session
+                .insert_user_id(user_id)
+                .map_err(|error| login_redirect(LoginError::UnexpectedError(error.into())))?;
+            // if successful, redirect to the admin dashboard page
             Ok(HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/"))
+                .insert_header((LOCATION, "/admin/dashboard"))
                 .finish())
         }
         Err(error) => {
@@ -73,4 +81,14 @@ impl std::fmt::Debug for LoginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         error_chain_fmt(self, f)
     }
+}
+
+fn login_redirect(error: LoginError) -> InternalError<LoginError> {
+    FlashMessage::error(error.to_string()).send();
+
+    let response = HttpResponse::SeeOther()
+        .insert_header((LOCATION, "/login"))
+        .finish();
+
+    InternalError::from_response(error, response)
 }
