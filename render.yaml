@@ -37,6 +37,11 @@ services:
           type: web
           name: zero2prod
           property: "https://${host}.onrender.com"
+      - key: APP_REDIS_URL
+        fromService:
+          type: redis
+          name: lightning
+          property: connectionString
       - key: APP_EMAIL_CLIENT__AUTHORIZATION_TOKEN
         sync: false
       - key: APP_APPLICATION__HMAC_SECRET
