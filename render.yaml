@@ -32,7 +32,7 @@ services:
         fromDatabase:
           name: newsletter
           property: database
-      - key: APP_REDIS_URL
+      - key: APP_REDIS__URI
         fromService:
           type: redis
           name: lightning
