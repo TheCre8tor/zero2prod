@@ -6,7 +6,10 @@ use sqlx::PgPool;
 use tera::Tera;
 use uuid::Uuid;
 
-use crate::{session_state::TypedSession, utils::{error500, see_other}};
+use crate::{
+    session_state::TypedSession,
+    utils::{error500, see_other},
+};
 
 #[get("/admin/dashboard")]
 pub async fn admin_dashboard(
@@ -38,7 +41,7 @@ pub async fn admin_dashboard(
 }
 
 #[tracing::instrument(name = "Get username", skip(pool))]
-async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
+pub async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
     let row = sqlx::query!(
         r#"
         SELECT username
