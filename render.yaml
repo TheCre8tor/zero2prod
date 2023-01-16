@@ -42,8 +42,16 @@ services:
       - key: APP_APPLICATION__HMAC_SECRET
         sync: false
 
+  - type: redis
+    name: lightning
+    ipAllowList: # required
+      - source: 0.0.0.0/0
+        description: everywhere
+    region: frankfurt
+    plan: free # optional (defaults to starter)
+    maxmemoryPolicy: noeviction # optional (defaults to allkeys-lru)
+
 databases:
   - name: newsletter
-    databaseName: newsletter
     region: frankfurt
     plan: free
