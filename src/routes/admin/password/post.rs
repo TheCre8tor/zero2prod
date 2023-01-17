@@ -31,6 +31,11 @@ pub async fn change_password(
 
     let user_id = user_id.unwrap();
 
+    if form.new_password.expose_secret().len() < 12 {
+        FlashMessage::warning("Password should be greater than 12").send();
+        return Ok(see_other("/admin/password"));
+    }
+
     if form.new_password.expose_secret() != form.new_password_check.expose_secret() {
         FlashMessage::error(
             "You entered two different new passwords - the field values must match.",
