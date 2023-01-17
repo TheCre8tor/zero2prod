@@ -1,7 +1,9 @@
+use actix_web::error::InternalError;
 use actix_web::{post, web, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
 use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
 
@@ -24,12 +26,7 @@ pub async fn change_password(
     session: TypedSession,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let user_id = session.get_user_id().map_err(error500)?;
-    if user_id.is_none() {
-        return Ok(see_other("/login"));
-    }
-
-    let user_id = user_id.unwrap();
+    let user_id = reject_anonymous_users(session).await?;
 
     if form.new_password.expose_secret().len() < 12 {
         FlashMessage::warning("Password should be greater than 12").send();
@@ -69,4 +66,15 @@ pub async fn change_password(
     FlashMessage::error("Your password has been changed.").send();
 
     Ok(see_other("/admin/password"))
+}
+
+async fn reject_anonymous_users(session: TypedSession) -> Result<Uuid, actix_web::Error> {
+    match session.get_user_id().map_err(error500)? {
+        Some(user_id) => Ok(user_id),
+        None => {
+            let response = see_other("/login");
+            let error = anyhow::anyhow!("the user has not logged in");
+            Err(InternalError::from_response(error, response).into())
+        }
+    }
 }
