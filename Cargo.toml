@@ -39,6 +39,7 @@ urlencoding = "2"
 tera = "1" 
 actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
 actix-session = { version = "0.7.2", features = ["redis-rs-tls-session"] }
+actix-web-lab = "0.18.9"
 
 [dependencies.sqlx]
 version = "0.6"
