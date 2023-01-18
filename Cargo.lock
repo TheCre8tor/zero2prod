@@ -3077,9 +3077,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-actix-web"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d16c2a0c52b267d46ea9a46012a28b3513ce166c28eaeaa875829ed2f8debd19"
+checksum = "4082e4d81173e0b7ad3cfb71e9eaef0dd0cbb7b139fdb56394f488a3b0760b23"
 dependencies = [
  "actix-web",
  "pin-project",
@@ -3100,10 +3100,11 @@ dependencies = [
 
 [[package]]
 name = "tracing-bunyan-formatter"
-version = "0.3.4"
+version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2445962f94a813b2aaea29ceeccb6dce9fd3aa5b1cb45595cde755b00d021ad"
+checksum = "78fa7c4b548e5c79a0300396f36f175da001e9933dfb5960b326db25fddbaee7"
 dependencies = [
+ "ahash 0.8.2",
  "gethostname",
  "log",
  "serde",
