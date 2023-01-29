@@ -1,7 +1,7 @@
 # This docker configuration as a caching system ->
 # It ruduces the build time but not the binaty size.
 
-FROM lukemathwalker/cargo-chef:latest-rust-1.63.0 as chef
+FROM lukemathwalker/cargo-chef:latest as chef
 
 WORKDIR /app
 
