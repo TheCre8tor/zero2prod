@@ -1,15 +1,19 @@
 //! src/lib.rs
 
 use actix_web::dev::Server;
-use actix_web::{web::get, App, HttpResponse, HttpServer, Responder};
+use actix_web::Responder;
+use actix_web::{web::get, App, HttpResponse, HttpServer};
+use std::net::TcpListener; // Transmission Control Protocol: [TCP]
+
+// NOTE: HTTP & TCP is a protocol
 
 async fn health_check() -> impl Responder {
-    HttpResponse::Ok()
+    HttpResponse::Ok().body("Thank you!")
 }
 
-pub fn run() -> Result<Server, std::io::Error> {
-    let server = HttpServer::new(|| App::new().route("/health_check", get().to(health_check)))
-        .bind("127.0.0.1:8000")?
+pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
+    let server = HttpServer::new(|| App::new().route("/health-check", get().to(health_check)))
+        .listen(listener)?
         .run();
 
     Ok(server)
