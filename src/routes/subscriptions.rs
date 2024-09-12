@@ -1,3 +1,5 @@
+//! src/routes/subscriptions
+
 use actix_web::web::Form;
 use actix_web::HttpResponse;
 

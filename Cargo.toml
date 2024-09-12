@@ -16,6 +16,7 @@ actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 reqwest = "0.12.7"
 serde = { version = "1", features = ["derive"]}
+config = "0.14"
 
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
