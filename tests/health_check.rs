@@ -2,12 +2,14 @@
 
 use std::net::TcpListener;
 
+use zero2prod::startup;
+
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind radom port");
     let socket_address = listener.local_addr().unwrap();
     let port = socket_address.port();
 
-    let server = zero2prod::run(listener).expect("Failed to bind address");
+    let server = startup::run(listener).expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
 
