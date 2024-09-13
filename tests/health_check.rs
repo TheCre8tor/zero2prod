@@ -41,7 +41,7 @@ impl TestApp {
     }
 
     pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-        let maintenance_settings = DatabaseSettings {
+        let mut maintenance_settings = DatabaseSettings {
             database_name: "postgres".to_string(),
             username: "postgres".to_string(),
             password: "password".to_string(),
@@ -54,13 +54,13 @@ impl TestApp {
 
         // Create database.
         let create_query = format!(r#"CREATE DATABASE "{}"; "#, config.database_name);
-
         connection
             .execute(create_query.as_str())
             .await
             .expect("Failed to create database.");
 
         // Migrate database.
+        maintenance_settings.database_name = config.database_name.clone();
         let connection_pool = PgPool::connect(&maintenance_settings.connection_string())
             .await
             .expect("Failed to connect to Postgres.");
