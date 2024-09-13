@@ -15,7 +15,7 @@ on:
       - main
 env:
   CARGO_TERM_COLOR: always
-  SQLX_VERSION: 0.8
+  SQLX_VERSION: "^0.8"
   SQLX_FEATURES: "rustls,postgres"
   APP_USER: app
   APP_USER_PWD: secret
