@@ -20,7 +20,6 @@ env:
   APP_USER: app
   APP_USER_PWD: secret
   APP_DB_NAME: newsletter
-  DATABASE_URL: DATABASE_URL=postgres://app:secret@127.0.0.1:5432/newsletter
 
 # A workflow run is made up of one or more jobs, which run in parallel by default
 # Each job runs in a runner environment specified by runs-on
