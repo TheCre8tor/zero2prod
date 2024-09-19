@@ -61,7 +61,7 @@ impl TestApp {
 
         // Migrate database.
         maintenance_settings.database_name = config.database_name.clone();
-        let connection_pool = PgPool::connect(&config.connection_string())
+        let connection_pool = PgPool::connect(&maintenance_settings.connection_string())
             .await
             .expect("Failed to connect to Postgres.");
 
