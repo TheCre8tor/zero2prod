@@ -1,21 +1,23 @@
-use std::net::TcpListener;
-
-use env_logger::Env;
 use sqlx::PgPool;
+use std::net::TcpListener;
 use zero2prod::configuration::Configuration;
 use zero2prod::startup;
+use zero2prod::telemetry::Telemetry;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    let config = Configuration::get().expect("Failed to read configuration.");
 
-    let configuration = Configuration::get().expect("Failed to read configuration.");
-    let address = format!("127.0.0.1:{}", configuration.application_port);
-    let listener = TcpListener::bind(address).expect("Failed to bind radom port");
+    Telemetry::init_subscriber(config.application.name);
 
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+    let address = format!("127.0.0.1:{}", config.application.port);
+    let listener = TcpListener::bind(address)?;
+
+    let connection_pool = PgPool::connect(&config.database.connection_string())
         .await
         .expect("Failed to connect to Postgres.");
 
-    startup::run(listener, connection_pool)?.await
+    startup::run(listener, connection_pool)?.await?;
+
+    Ok(())
 }
