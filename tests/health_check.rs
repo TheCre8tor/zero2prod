@@ -2,12 +2,26 @@
 
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::TcpListener;
+use std::{net::TcpListener, sync::LazyLock};
 use uuid::Uuid;
 use zero2prod::{
     configuration::{Configuration, DatabaseSettings},
     startup,
+    telemetry::Telemetry,
 };
+
+// Ensure that the `tracing` stack is only initialised once using `LazyLock`
+static TRACING: LazyLock<()> = LazyLock::new(|| {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+    let use_test_log = std::env::var("TEST_LOG").is_ok();
+
+    if use_test_log {
+        Telemetry::init_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+    } else {
+        Telemetry::init_subscriber(subscriber_name, default_filter_level, std::io::sink);
+    }
+});
 
 pub struct TestApp {
     pub address: String,
@@ -16,6 +30,10 @@ pub struct TestApp {
 
 impl TestApp {
     async fn spawn_app() -> TestApp {
+        // The first time `initialize` is invoked the code in `TRACING` is executed.
+        // All other invocations will instead skip execution.
+        LazyLock::force(&TRACING);
+
         let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind radom port");
         let socket_address = listener.local_addr().unwrap();
         let port = socket_address.port();
