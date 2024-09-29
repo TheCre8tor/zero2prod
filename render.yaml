@@ -1,0 +1,18 @@
+services:
+  # A Docker web service
+  - type: web
+    runtime: docker
+    name: zero2prod
+    numInstances: 1 # optional (defaults to 1)
+    region: frankfurt # optional (defaults to oregon)
+    plan: free # optional (defaults to starter)
+    branch: main # optional (defaults to master)
+    rootDir: .
+    autoDeploy: true
+    healthCheckPath: /health-check
+
+databases:
+  - name: newsletter
+    region: frankfurt
+    postgresMajorVersion: "12"
+    plan: free
