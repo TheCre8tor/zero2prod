@@ -1,5 +1,5 @@
 # 1. Chef stage ->
-FROM lukemathwalker/cargo-chef:latest-rust-1.81-alpine as chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.81.0 as chef
 
 # Let's switch our working directory to `app` (equivalent to `cd app`)
 # The `app` folder will be created for us by Docker in case it does not
