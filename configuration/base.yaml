@@ -1,7 +1,6 @@
-# configuration.yaml
+#! configuration/base.yaml
 application:
   port: 8000
-  name: "zero2prod"
 database:
   host: "127.0.0.1"
   port: 5432
