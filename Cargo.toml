@@ -15,10 +15,12 @@ name = "zero2prod"
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 reqwest = "0.12.7"
-serde = { version = "1", features = ["derive"]}
 config = "0.14"
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
+
+serde = { version = "1", features = ["derive"]}
+serde-aux = "4"
 
 # Gold Bag ->
 tracing = { version = "0.1", features = ["log"] }
