@@ -67,10 +67,9 @@ impl TestApp {
             ..config.clone()
         };
 
-        let mut connection =
-            PgConnection::connect(maintenance_settings.connection_string().expose_secret())
-                .await
-                .expect("Failed to connect to Postgres.");
+        let mut connection = PgConnection::connect_with(&maintenance_settings.connect_options())
+            .await
+            .expect("Failed to connect to Postgres.");
 
         // Create database.
         let create_query = format!(r#"CREATE DATABASE "{}"; "#, config.database_name);
@@ -81,10 +80,9 @@ impl TestApp {
 
         // Migrate database.
         maintenance_settings.database_name = config.database_name.clone();
-        let connection_pool =
-            PgPool::connect(maintenance_settings.connection_string().expose_secret())
-                .await
-                .expect("Failed to connect to Postgres.");
+        let connection_pool = PgPool::connect_with(maintenance_settings.connect_options())
+            .await
+            .expect("Failed to connect to Postgres.");
 
         sqlx::migrate!("./migrations")
             .run(&connection_pool)
