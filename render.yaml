@@ -14,7 +14,7 @@ services:
       - key: APP_DATABASE__USERNAME
         fromDatabase:
           name: newsletter
-          property: username
+          property: user
       - key: APP_DATABASE__PASSWORD
         fromDatabase:
           name: newsletter
