@@ -10,6 +10,27 @@ services:
     rootDir: .
     autoDeploy: true
     healthCheckPath: /health-check
+    envVars:
+      - key: APP_DATABASE__USERNAME
+        fromDatabase:
+          name: newsletter
+          property: username
+      - key: APP_DATABASE__PASSWORD
+        fromDatabase:
+          name: newsletter
+          property: password
+      - key: APP_DATABASE__HOST
+        fromDatabase:
+          name: newsletter
+          property: host
+      - key: APP_DATABASE__PORT
+        fromDatabase:
+          name: newsletter
+          property: port
+      - key: APP_DATABASE__DATABASE_NAME
+        fromDatabase:
+          name: newsletter
+          property: database
 
 databases:
   - name: newsletter

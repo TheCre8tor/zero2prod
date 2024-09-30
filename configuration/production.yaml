@@ -3,3 +3,5 @@
 application:
   host: 0.0.0.0
   name: "ZeroToProd: [production]"
+database:
+  require_ssl: true
