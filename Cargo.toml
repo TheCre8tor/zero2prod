@@ -35,6 +35,10 @@ claims = "0.7"
 validator = "0.18"
 fake = "2.10"
 
+quickcheck = "1.0.3"
+quickcheck_macros = "1"
+rand = "0.8"
+
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
 version = "0.8"
