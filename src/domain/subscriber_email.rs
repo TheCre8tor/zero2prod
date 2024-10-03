@@ -26,6 +26,9 @@ mod tests {
     use super::SubscriberEmail;
     use claims::assert_err;
 
+    use fake::faker::internet::en::SafeEmail;
+    use fake::Fake;
+
     #[test]
     fn empty_string_is_rejected() {
         let email = "".to_string();
@@ -42,5 +45,11 @@ mod tests {
     fn email_missing_subject_is_rejected() {
         let email = "@domain.com".to_string();
         assert_err!(SubscriberEmail::parse(email));
+    }
+
+    #[test]
+    fn valid_emails_are_parsed_successfully() {
+        let email = SafeEmail().fake();
+        claims::assert_ok!(SubscriberEmail::parse(email));
     }
 }
