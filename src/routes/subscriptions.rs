@@ -6,6 +6,8 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::{NewSubscriber, SubscriberName};
+
 #[derive(serde::Deserialize)]
 pub struct FormData {
     email: String,
@@ -21,7 +23,12 @@ pub struct FormData {
     )
 )]
 pub async fn subscribe(form: Form<FormData>, pool: Data<PgPool>) -> HttpResponse {
-    let insert_operation = insert_subscriber(&pool, &form).await;
+    let new_subscriber = NewSubscriber {
+        email: form.0.email,
+        name: SubscriberName::parse(form.0.name).expect("Name validation failed"),
+    };
+
+    let insert_operation = insert_subscriber(&pool, &new_subscriber).await;
 
     match insert_operation {
         Ok(_) => HttpResponse::Ok().finish(),
@@ -31,17 +38,17 @@ pub async fn subscribe(form: Form<FormData>, pool: Data<PgPool>) -> HttpResponse
 
 #[tracing::instrument(
     name = "Saving new subscriber details in the database",
-    skip(pool, form)
+    skip(pool, subscriber)
 )]
-async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
+async fn insert_subscriber(pool: &PgPool, subscriber: &NewSubscriber) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
         "#,
         Uuid::new_v4(),
-        form.email,
-        form.name,
+        subscriber.email,
+        subscriber.name.as_ref(),
         Utc::now()
     )
     .execute(pool)
