@@ -32,6 +32,8 @@ tracing-actix-web = "0.7"
 
 redact = { version = "0.1", features = ["serde"] }
 claims = "0.7"
+validator = "0.18"
+fake = "2.10"
 
 # Using table-like toml syntax to avoid a super-long line!
 [dependencies.sqlx]
